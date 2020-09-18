@@ -2,6 +2,7 @@
 Reads CLI arguments and performs necessary preparation to be able to run the function
 """
 
+import boto3
 import errno
 import json
 import os
@@ -185,8 +186,11 @@ class InvokeContext:
         :return samcli.commands.local.lib.local_lambda.LocalLambdaRunner: Runner configured to run Lambda functions
             locally
         """
-
-        layer_downloader = LayerDownloader(self._layer_cache_basedir, self.get_cwd())
+        lambda_client = boto3.session.Session(
+            profile_name=self._aws_profile,
+            region_name=self._aws_region
+            ).client('lambda')
+        layer_downloader = LayerDownloader(self._layer_cache_basedir, self.get_cwd(), lambda_client)
         image_builder = LambdaImage(layer_downloader, self._skip_pull_image, self._force_image_build)
 
         lambda_runtime = LambdaRuntime(self._container_manager, image_builder)
